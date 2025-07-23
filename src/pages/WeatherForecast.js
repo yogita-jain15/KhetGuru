@@ -10,6 +10,7 @@ import {
   Button,
   InputGroup,
   ListGroup,
+  Accordion,
 } from 'react-bootstrap';
 
 const WeatherForecast = () => {
@@ -18,12 +19,11 @@ const WeatherForecast = () => {
   const [error, setError] = useState('');
   const [city, setCity] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-  const [unit, setUnit] = useState('C'); // C for Celsius, F for Fahrenheit
+  const [unit, setUnit] = useState('C');
   const [isLoading, setIsLoading] = useState(false);
 
   const API_KEY = '60324270c5d4432baa750251252307';
 
-  // Function to fetch weather based on a query (city name or lat,lon)
   const fetchWeather = (query) => {
     setIsLoading(true);
     setError('');
@@ -61,7 +61,6 @@ const WeatherForecast = () => {
       });
   };
 
-  // Initial load from geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -77,7 +76,6 @@ const WeatherForecast = () => {
     }
   }, []);
 
-  // Fetch city suggestions when typing
   useEffect(() => {
     if (city.trim().length < 3) {
       setSuggestions([]);
@@ -90,14 +88,13 @@ const WeatherForecast = () => {
       .catch((err) => console.error(err));
   }, [city]);
 
-  // Convert temperature based on unit
   const formatTemp = (c, f) => (unit === 'C' ? `${c}°C` : `${f}°F`);
 
   return (
     <Container className="my-5" style={{ background: '#F4FFF4', borderRadius: '18px' }}>
       <h2 className="text-center mb-4">🌦️ Weather Forecast</h2>
 
-      {/* Search + Reset Controls */}
+      {/* Search & Reset */}
       <Row className="mb-3">
         <Col md={8}>
           <InputGroup>
@@ -121,13 +118,10 @@ const WeatherForecast = () => {
                 setCity('');
                 setSuggestions([]);
               }}
-              className="btn-hover"
             >
               🔍 Search
             </Button>
           </InputGroup>
-
-          {/* Autocomplete dropdown */}
           {suggestions.length > 0 && (
             <ListGroup>
               {suggestions.map((sug) => (
@@ -160,14 +154,13 @@ const WeatherForecast = () => {
                 () => setError('Location access denied.')
               );
             }}
-            className="btn-hover"
           >
             📍 Reset to My Location
           </Button>
         </Col>
       </Row>
 
-      {/* Temperature toggle */}
+      {/* Unit Toggle */}
       <div className="text-center mb-3">
         <Button
           variant={unit === 'C' ? 'info' : 'outline-info'}
@@ -184,7 +177,7 @@ const WeatherForecast = () => {
         </Button>
       </div>
 
-      {/* Error and loading spinner */}
+      {/* Alerts */}
       {error && <Alert variant="danger">{error}</Alert>}
       {isLoading && <Spinner animation="border" />}
 
@@ -207,7 +200,6 @@ const WeatherForecast = () => {
             </Col>
           </Row>
 
-          {/* Alerts */}
           {weather.alerts.length > 0 && (
             <Alert variant="danger" className="mt-3">
               <strong>⚠️ Weather Alerts:</strong>
@@ -223,14 +215,14 @@ const WeatherForecast = () => {
         </Card>
       )}
 
-      {/* 10-Day Forecast */}
+      {/* 10-Day Forecast with Hourly */}
       {forecast.length > 0 && (
         <Card className="mb-4 shadow p-4 border-0" style={{ background: '#ffeeeee6' }}>
           <h4>📅 10-Day Forecast</h4>
           <Row>
             {forecast.map((day, index) => (
               <Col key={index} xs={12} md={6} lg={4} className="my-3">
-                <Card className="h-100 text-center">
+                <Card className="h-100 style={{ textAlign: 'left' }}">
                   <Card.Body>
                     <Card.Title>{day.date}</Card.Title>
                     <img src={day.day.condition.icon} alt={day.day.condition.text} />
@@ -239,6 +231,29 @@ const WeatherForecast = () => {
                     <p><strong>💧 Humidity:</strong> {day.day.avghumidity}%</p>
                     <p><strong>☁️ Condition:</strong> {day.day.condition.text}</p>
                     <p><strong>🌧️ Rain:</strong> {day.day.daily_chance_of_rain}%</p>
+
+                    {/* Hourly Weather Accordion */}
+                    <Accordion className="mt-3">
+                      <Accordion.Item eventKey="0">
+                        <Accordion.Header>🌤️ Show Hourly Weather</Accordion.Header>
+                        <Accordion.Body>
+                          <ListGroup style={{ maxHeight: '300px', overflowY: 'scroll' }}>
+                            {day.hour.map((hour, i) => (
+                              <ListGroup.Item key={i} className="d-flex justify-content-between align-items-center">
+                                <div>
+                                  <strong>{hour.time.split(' ')[1]}</strong>
+                                  <div style={{ fontSize: '0.8em' }}>{hour.condition.text}</div>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                  <img src={hour.condition.icon} alt="" style={{ height: 30, marginRight: 5 }} />
+                                  <span>{formatTemp(hour.temp_c, hour.temp_f)}</span>
+                                </div>
+                              </ListGroup.Item>
+                            ))}
+                          </ListGroup>
+                        </Accordion.Body>
+                      </Accordion.Item>
+                    </Accordion>
                   </Card.Body>
                 </Card>
               </Col>
